@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from sqlmodel import create_engine , SQLModel, Session
+from sqlmodel import create_engine , SQLModel, Session , select
 from models import Appointment
 
 
@@ -23,3 +23,17 @@ def create_appointment(appointment: Appointment):
         session.refresh(appointment)
         return appointment
 
+@app.get('/appointments', response_model=list[Appointment])
+def get_appointments():
+    with Session(engine) as session:
+        appointments = session.exec(select(Appointment)).all()
+        return appointments
+
+@app.get('/appointment/{id}', response_model=Appointment)
+def get_appointment(id : int):
+    with Session(engine) as session:
+        appointment = session.get(Appointment, id)
+        if not Appointment:
+            raise HTTPException(status_code=404, detail=f'No such Appointments {id}')
+        
+        return appointment
